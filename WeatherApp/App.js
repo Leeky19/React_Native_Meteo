@@ -20,6 +20,19 @@ const API_KEY = 'd6def4924ad5f9a9b59f3ae895b234cb';
 const WEATHER_API_URL = 'https://api.openweathermap.org/data/2.5/forecast';
 const GEO_API_URL = 'https://api.openweathermap.org/geo/1.0/direct';
 
+// Fonction pour obtenir l'image de background en fonction de la météo
+const getBackgroundImage = (description) => {
+  if (description.includes('pluie')) return require('./assets/bckg_pluie.jpg');
+  if (description.includes('neige')) return require('./assets/bckg_neige.jpg');
+  if (description.includes('orage')) return require('./assets/bckg_orage.jpg');
+  if (description.includes('brouillard') || description.includes('brume')) return require('./assets/bckg_brouillard.jpg');
+  if (description.includes('nuage',) || description.includes('couvert')) return require('./assets/bckg_nuage.jpg');
+  if (description.includes('sable') || description.includes('cendres') || description.includes('tornade')) {
+    return require('./assets/bckg_special.jpg');
+  }
+  return require('./assets/background.jpg'); // Par défaut, ciel dégagé
+};
+
 export default function App() {
   const [location, setLocation] = useState(null);
   const [weatherData, setWeatherData] = useState(null);
@@ -30,21 +43,15 @@ export default function App() {
   useEffect(() => {
     const fetchLocationAndWeather = async () => {
       try {
-        // Demander l'autorisation de localisation
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') {
           setError('Permission de localisation refusée.');
           return;
         }
 
-        // Récupérer la position actuelle
         const currentLocation = await Location.getCurrentPositionAsync({});
         const { latitude, longitude } = currentLocation.coords;
-
-        // Mettre à jour l'état avec la localisation
         setLocation({ latitude, longitude });
-
-        // Récupérer les données météo pour la localisation
         await fetchWeatherData(latitude, longitude);
       } catch (err) {
         console.log('Erreur lors de la récupération de la localisation : ', err);
@@ -55,7 +62,6 @@ export default function App() {
     fetchLocationAndWeather();
   }, []);
 
-  // Fonction pour récupérer les données météo via l'API
   const fetchWeatherData = async (latitude, longitude) => {
     try {
       const response = await axios.get(WEATHER_API_URL, {
@@ -74,7 +80,6 @@ export default function App() {
     }
   };
 
-  // Fonction pour rechercher une ville et récupérer ses coordonnées
   const fetchCityCoordinates = async () => {
     try {
       if (!city.trim()) return;
@@ -94,11 +99,8 @@ export default function App() {
 
       const { lat, lon } = response.data[0];
       setLocation({ latitude: lat, longitude: lon });
-
-      // Récupérer les données météo pour la nouvelle localisation
       await fetchWeatherData(lat, lon);
 
-      // Réinitialiser l'état de la ville et fermer le clavier
       setCity('');
       Keyboard.dismiss();
     } catch (err) {
@@ -107,18 +109,16 @@ export default function App() {
     }
   };
 
+  // Récupérer l'image de background
+  const backgroundImage = weatherData
+    ? getBackgroundImage(weatherData.list[0].weather[0].description)
+    : require('./assets/background.jpg');
+
   return (
     <SafeAreaView style={styles.container}>
-      <ImageBackground
-        source={require('./assets/background.jpg')}
-        style={styles.backgroundImage}
-      >
+      <ImageBackground source={backgroundImage} style={styles.backgroundImage}>
         {error && <Text style={styles.error}>{error}</Text>}
-
-        {/* Météo actuelle */}
         {weatherData && <CurrentWeather data={weatherData} />}
-
-        {/* Champ de recherche */}
         <View style={styles.searchContainer}>
           <TextInput
             style={styles.input}
@@ -130,8 +130,6 @@ export default function App() {
             <FontAwesomeIcon icon={faSearch} size={20} color="#fff" />
           </Pressable>
         </View>
-
-        {/* Prévisions météo */}
         {weatherData && <ForecastWeather data={weatherData} />}
       </ImageBackground>
     </SafeAreaView>
@@ -155,6 +153,7 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     marginHorizontal: 20,
+    marginTop: 75,
     marginBottom: 20,
   },
   input: {

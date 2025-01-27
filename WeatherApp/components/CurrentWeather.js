@@ -20,16 +20,33 @@ export default function CurrentWeather({ data }) {
   if (!currentWeather) return null;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: 40 }]}>
       <Text style={styles.city}>{currentWeather.city}</Text>
-      <Text>{currentWeather.temp}°C</Text>
-      <Text>{currentWeather.description}</Text>
-      <ShowIcon icon={currentWeather.icon} resolution="2x" size={50} />
+      <Text style={styles.temp}>{currentWeather.temp}°C</Text>
+      <Text style={styles.description}>{currentWeather.description}</Text>
+      <ShowIcon icon={currentWeather.icon} resolution="2x" size={120} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { alignItems: 'center', marginBottom: 20 },
-  city: { fontSize: 20, fontWeight: 'bold' },
-});
+    container: {
+      alignItems: 'center',
+    },
+    city: {
+      fontSize: 24,
+      fontWeight: 'bold',
+      marginBottom: 10,
+    },
+    temp: {
+      fontSize: 32,
+      fontWeight: 'bold',
+      color: '#000',
+      marginBottom: 5,
+    },
+    description: {
+      fontSize: 18,
+      color: '#555',
+      marginBottom: 15,
+    },
+  });
