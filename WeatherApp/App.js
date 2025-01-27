@@ -118,7 +118,6 @@ export default function App() {
     <SafeAreaView style={styles.container}>
       <ImageBackground source={backgroundImage} style={styles.backgroundImage}>
         {error && <Text style={styles.error}>{error}</Text>}
-        {weatherData && <CurrentWeather data={weatherData} />}
         <View style={styles.searchContainer}>
           <TextInput
             style={styles.input}
@@ -130,6 +129,7 @@ export default function App() {
             <FontAwesomeIcon icon={faSearch} size={20} color="#fff" />
           </Pressable>
         </View>
+        {weatherData && <CurrentWeather data={weatherData} />}
         {weatherData && <ForecastWeather data={weatherData} />}
       </ImageBackground>
     </SafeAreaView>
