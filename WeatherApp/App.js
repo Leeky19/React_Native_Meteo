@@ -14,7 +14,7 @@ import axios from 'axios';
 import CurrentWeather from './components/CurrentWeather';
 import ForecastWeather from './components/ForecastWeather';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faSearch, faCrosshairs } from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faCrosshairs, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 const API_KEY = 'd6def4924ad5f9a9b59f3ae895b234cb';
 const WEATHER_API_URL = 'https://api.openweathermap.org/data/2.5/forecast';
@@ -38,9 +38,11 @@ export default function App() {
   const [weatherData, setWeatherData] = useState(null);
   const [city, setCity] = useState('');
   const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false); // État de chargement
 
   // Fonction pour récupérer la météo de la localisation actuelle
   const fetchWeatherForCurrentLocation = async () => {
+    setIsLoading(true); // Afficher le loader
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
@@ -55,6 +57,8 @@ export default function App() {
     } catch (err) {
       console.log('Erreur lors de la récupération de la localisation : ', err);
       setError('Impossible de récupérer la localisation.');
+    } finally {
+      setIsLoading(false); // Cacher le loader
     }
   };
 
@@ -117,7 +121,6 @@ export default function App() {
       <ImageBackground source={backgroundImage} style={styles.backgroundImage}>
         {error && <Text style={styles.error}>{error}</Text>}
         <View style={styles.searchContainer}>
-
           {/* Champ de recherche */}
           <TextInput
             style={styles.input}
@@ -125,9 +128,18 @@ export default function App() {
             value={city}
             onChangeText={setCity}
           />
+          
           {/* Bouton de localisation */}
-          <Pressable style={styles.locationButton} onPress={fetchWeatherForCurrentLocation}>
-            <FontAwesomeIcon icon={faCrosshairs} size={20} color="#fff" />
+          <Pressable
+            style={styles.locationButton}
+            onPress={fetchWeatherForCurrentLocation}
+            disabled={isLoading} // Désactive le bouton pendant le chargement
+          >
+            {isLoading ? (
+              <FontAwesomeIcon icon={faSpinner} size={20} color="#fff" spin />
+            ) : (
+              <FontAwesomeIcon icon={faCrosshairs} size={20} color="#fff" />
+            )}
           </Pressable>
           
           {/* Bouton de recherche */}
