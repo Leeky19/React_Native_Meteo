@@ -8,6 +8,7 @@ import {
   ImageBackground,
   Text,
   Keyboard,
+  Animated,
 } from 'react-native';
 import * as Location from 'expo-location';
 import axios from 'axios';
@@ -40,9 +41,24 @@ export default function App() {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false); // État de chargement
 
+  // Création d'une animation de rotation
+  const rotateAnim = useState(new Animated.Value(0))[0];
+
+  // Fonction pour démarrer l'animation
+  const startSpin = () => {
+    Animated.loop(
+      Animated.timing(rotateAnim, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      })
+    ).start();
+  };
+
   // Fonction pour récupérer la météo de la localisation actuelle
   const fetchWeatherForCurrentLocation = async () => {
     setIsLoading(true); // Afficher le loader
+    startSpin(); // Démarrer l'animation de rotation
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
@@ -116,6 +132,12 @@ export default function App() {
     ? getBackgroundImage(weatherData.list[0].weather[0].description)
     : require('./assets/background.jpg');
 
+  // Rotation de l'icône
+  const rotate = rotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'], // Rotation de 0 à 360 degrés
+  });
+
   return (
     <SafeAreaView style={styles.container}>
       <ImageBackground source={backgroundImage} style={styles.backgroundImage}>
@@ -136,7 +158,9 @@ export default function App() {
             disabled={isLoading} // Désactive le bouton pendant le chargement
           >
             {isLoading ? (
-              <FontAwesomeIcon icon={faSpinner} size={20} color="#fff" spin />
+              <Animated.View style={{ transform: [{ rotate }] }}>
+                <FontAwesomeIcon icon={faSpinner} size={20} color="#fff" spin />
+              </Animated.View>
             ) : (
               <FontAwesomeIcon icon={faCrosshairs} size={20} color="#fff" />
             )}
