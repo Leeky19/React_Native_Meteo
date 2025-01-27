@@ -14,7 +14,7 @@ import axios from 'axios';
 import CurrentWeather from './components/CurrentWeather';
 import ForecastWeather from './components/ForecastWeather';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faSearch } from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faCrosshairs } from '@fortawesome/free-solid-svg-icons';
 
 const API_KEY = 'd6def4924ad5f9a9b59f3ae895b234cb';
 const WEATHER_API_URL = 'https://api.openweathermap.org/data/2.5/forecast';
@@ -39,29 +39,26 @@ export default function App() {
   const [city, setCity] = useState('');
   const [error, setError] = useState(null);
 
-  // Récupérer la localisation et les données météo au démarrage
-  useEffect(() => {
-    const fetchLocationAndWeather = async () => {
-      try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') {
-          setError('Permission de localisation refusée.');
-          return;
-        }
-
-        const currentLocation = await Location.getCurrentPositionAsync({});
-        const { latitude, longitude } = currentLocation.coords;
-        setLocation({ latitude, longitude });
-        await fetchWeatherData(latitude, longitude);
-      } catch (err) {
-        console.log('Erreur lors de la récupération de la localisation : ', err);
-        setError('Impossible de récupérer la localisation.');
+  // Fonction pour récupérer la météo de la localisation actuelle
+  const fetchWeatherForCurrentLocation = async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setError('Permission de localisation refusée.');
+        return;
       }
-    };
 
-    fetchLocationAndWeather();
-  }, []);
+      const currentLocation = await Location.getCurrentPositionAsync({});
+      const { latitude, longitude } = currentLocation.coords;
+      setLocation({ latitude, longitude });
+      await fetchWeatherData(latitude, longitude);
+    } catch (err) {
+      console.log('Erreur lors de la récupération de la localisation : ', err);
+      setError('Impossible de récupérer la localisation.');
+    }
+  };
 
+  // Fonction pour récupérer les données météo pour une localisation donnée (ville ou coordonnées)
   const fetchWeatherData = async (latitude, longitude) => {
     try {
       const response = await axios.get(WEATHER_API_URL, {
@@ -80,6 +77,7 @@ export default function App() {
     }
   };
 
+  // Fonction pour rechercher les coordonnées d'une ville
   const fetchCityCoordinates = async () => {
     try {
       if (!city.trim()) return;
@@ -119,17 +117,29 @@ export default function App() {
       <ImageBackground source={backgroundImage} style={styles.backgroundImage}>
         {error && <Text style={styles.error}>{error}</Text>}
         <View style={styles.searchContainer}>
+
+          {/* Champ de recherche */}
           <TextInput
             style={styles.input}
             placeholder="Entrez une ville..."
             value={city}
             onChangeText={setCity}
           />
+          {/* Bouton de localisation */}
+          <Pressable style={styles.locationButton} onPress={fetchWeatherForCurrentLocation}>
+            <FontAwesomeIcon icon={faCrosshairs} size={20} color="#fff" />
+          </Pressable>
+          
+          {/* Bouton de recherche */}
           <Pressable style={styles.searchButton} onPress={fetchCityCoordinates}>
             <FontAwesomeIcon icon={faSearch} size={20} color="#fff" />
           </Pressable>
         </View>
+
+        {/* Affichage des données météo actuelles */}
         {weatherData && <CurrentWeather data={weatherData} />}
+
+        {/* Affichage des prévisions météo */}
         {weatherData && <ForecastWeather data={weatherData} />}
       </ImageBackground>
     </SafeAreaView>
@@ -155,6 +165,14 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginTop: 75,
     marginBottom: 20,
+  },
+  locationButton: {
+    backgroundColor: '#007BFF',
+    borderRadius: 5,
+    padding: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10, // Espacement entre le bouton et le champ de recherche
   },
   input: {
     flex: 1,
