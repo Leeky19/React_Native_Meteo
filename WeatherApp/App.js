@@ -61,6 +61,7 @@ export default function App() {
 
   const fetchWeatherForCurrentLocation = async () => {
     setIsLoading(true);
+    setError(null); // ← Efface l’erreur au lancement
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
@@ -99,6 +100,7 @@ export default function App() {
   };
 
   const fetchCityCoordinates = async () => {
+    setError(null); // ← Efface l’erreur au lancement
     try {
       if (!city.trim()) return;
 
