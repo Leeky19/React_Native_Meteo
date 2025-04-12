@@ -1,52 +1,55 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import ShowIcon from './ShowIcon';
+import React from 'react';
+import { View, Text, StyleSheet, Image } from 'react-native';
 
 export default function CurrentWeather({ data }) {
-  const [currentWeather, setCurrentWeather] = useState(null);
+  const { main, weather, wind } = data.list[0];
+  const cityName = data.city.name;
 
-  useEffect(() => {
-    if (data) {
-      const weather = data.list[0];
-      setCurrentWeather({
-        city: data.city.name,
-        temp: weather.main.temp,
-        description: weather.weather[0].description,
-        icon: weather.weather[0].icon,
-      });
-    }
-  }, [data]);
+  const iconCode = weather[0].icon;
+  const iconUrl = `https://openweathermap.org/img/wn/${iconCode}@4x.png`;
 
-  if (!currentWeather) return null;
+  const isDarkBackground = weather[0].description.includes('pluie');
+  const textColor = isDarkBackground ? '#fff' : '#000';
 
   return (
-    <View style={[styles.container, { paddingTop: 40 }]}>
-      <Text style={styles.city}>{currentWeather.city}</Text>
-      <Text style={styles.temp}>{currentWeather.temp}°C</Text>
-      <Text style={styles.description}>{currentWeather.description}</Text>
-      <ShowIcon icon={currentWeather.icon} resolution="2x" size={120} />
+    <View style={styles.container}>
+      <Text style={[styles.cityName, { color: textColor }]}>{cityName}</Text>
+      <Image source={{ uri: iconUrl }} style={styles.icon} />
+      <Text style={[styles.temperature, { color: textColor }]}>
+        {Math.round(main.temp)}°C
+      </Text>
+      <Text style={[styles.description, { color: textColor }]}>
+        {weather[0].description}
+      </Text>
+      <Text style={[styles.wind, { color: textColor }]}>
+        Vent : {Math.round(wind.speed)} m/s
+      </Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-    container: {
-      alignItems: 'center',
-    },
-    city: {
-      fontSize: 24,
-      fontWeight: 'bold',
-      marginBottom: 10,
-    },
-    temp: {
-      fontSize: 32,
-      fontWeight: 'bold',
-      color: '#000',
-      marginBottom: 5,
-    },
-    description: {
-      fontSize: 18,
-      color: '#555',
-      marginBottom: 15,
-    },
-  });
+  container: {
+    alignItems: 'center',
+    marginHorizontal: 10,
+  },
+  cityName: {
+    fontSize: 28,
+    fontWeight: '600',
+    marginBottom: 10,
+  },
+  icon: {
+    width: 100,
+    height: 100,
+  },
+  temperature: {
+    fontSize: 40,
+    fontWeight: 'bold',
+  },
+  description: {
+    fontSize: 18,
+  },
+  wind: {
+    fontSize: 14,
+  },
+});

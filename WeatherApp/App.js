@@ -8,6 +8,7 @@ import {
   ImageBackground,
   Text,
   Keyboard,
+  Animated,
 } from 'react-native';
 import * as Location from 'expo-location';
 import axios from 'axios';
@@ -20,17 +21,14 @@ const API_KEY = 'd6def4924ad5f9a9b59f3ae895b234cb';
 const WEATHER_API_URL = 'https://api.openweathermap.org/data/2.5/forecast';
 const GEO_API_URL = 'https://api.openweathermap.org/geo/1.0/direct';
 
-// Fonction pour obtenir l'image de background en fonction de la météo
 const getBackgroundImage = (description) => {
   if (description.includes('pluie')) return require('./assets/bckg_pluie.jpg');
   if (description.includes('neige')) return require('./assets/bckg_neige.jpg');
   if (description.includes('orage')) return require('./assets/bckg_orage.jpg');
   if (description.includes('brouillard') || description.includes('brume')) return require('./assets/bckg_brouillard.jpg');
-  if (description.includes('nuage',) || description.includes('couvert')) return require('./assets/bckg_nuage.jpg');
-  if (description.includes('sable') || description.includes('cendres') || description.includes('tornade')) {
-    return require('./assets/bckg_special.jpg');
-  }
-  return require('./assets/background.jpg'); // Par défaut, ciel dégagé
+  if (description.includes('nuage') || description.includes('couvert')) return require('./assets/bckg_nuage.jpg');
+  if (description.includes('sable') || description.includes('cendres') || description.includes('tornade')) return require('./assets/bckg_special.jpg');
+  return require('./assets/background.jpg');
 };
 
 export default function App() {
@@ -38,26 +36,31 @@ export default function App() {
   const [weatherData, setWeatherData] = useState(null);
   const [city, setCity] = useState('');
   const [error, setError] = useState(null);
-  const [isLoading, setIsLoading] = useState(false); // État de chargement
+  const [isLoading, setIsLoading] = useState(false);
+  const spinValue = useState(new Animated.Value(0))[0];
 
-  // Création d'une animation de rotation
-  const rotateAnim = useState(new Animated.Value(0))[0];
+  useEffect(() => {
+    if (isLoading) {
+      Animated.loop(
+        Animated.timing(spinValue, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        })
+      ).start();
+    } else {
+      spinValue.stopAnimation();
+      spinValue.setValue(0);
+    }
+  }, [isLoading]);
 
-  // Fonction pour démarrer l'animation
-  const startSpin = () => {
-    Animated.loop(
-      Animated.timing(rotateAnim, {
-        toValue: 1,
-        duration: 1000,
-        useNativeDriver: true,
-      })
-    ).start();
-  };
+  const spin = spinValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
 
-  // Fonction pour récupérer la météo de la localisation actuelle
   const fetchWeatherForCurrentLocation = async () => {
-    setIsLoading(true); // Afficher le loader
-    startSpin(); // Démarrer l'animation de rotation
+    setIsLoading(true);
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
@@ -73,11 +76,10 @@ export default function App() {
       console.log('Erreur lors de la récupération de la localisation : ', err);
       setError('Impossible de récupérer la localisation.');
     } finally {
-      setIsLoading(false); // Cacher le loader
+      setIsLoading(false);
     }
   };
 
-  // Fonction pour récupérer les données météo pour une localisation donnée (ville ou coordonnées)
   const fetchWeatherData = async (latitude, longitude) => {
     try {
       const response = await axios.get(WEATHER_API_URL, {
@@ -96,7 +98,6 @@ export default function App() {
     }
   };
 
-  // Fonction pour rechercher les coordonnées d'une ville
   const fetchCityCoordinates = async () => {
     try {
       if (!city.trim()) return;
@@ -126,56 +127,48 @@ export default function App() {
     }
   };
 
-  // Récupérer l'image de background
   const backgroundImage = weatherData
     ? getBackgroundImage(weatherData.list[0].weather[0].description)
     : require('./assets/background.jpg');
-
-  // Rotation de l'icône
-  const rotate = rotateAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '360deg'], // Rotation de 0 à 360 degrés
-  });
 
   return (
     <SafeAreaView style={styles.container}>
       <ImageBackground source={backgroundImage} style={styles.backgroundImage}>
         {error && <Text style={styles.error}>{error}</Text>}
+
         <View style={styles.searchContainer}>
-          {/* Champ de recherche */}
           <TextInput
             style={styles.input}
             placeholder="Entrez une ville..."
             value={city}
             onChangeText={setCity}
           />
-          
-          {/* Bouton de localisation */}
+
           <Pressable
             style={styles.locationButton}
             onPress={fetchWeatherForCurrentLocation}
-            disabled={isLoading} // Désactive le bouton pendant le chargement
+            disabled={isLoading}
           >
             {isLoading ? (
-              <Animated.View style={{ transform: [{ rotate }] }}>
-                <FontAwesomeIcon icon={faSpinner} size={20} color="#fff" spin />
+              <Animated.View style={{ transform: [{ rotate: spin }] }}>
+                <FontAwesomeIcon icon={faSpinner} size={20} color="#fff" />
               </Animated.View>
             ) : (
               <FontAwesomeIcon icon={faCrosshairs} size={20} color="#fff" />
             )}
           </Pressable>
-          
-          {/* Bouton de recherche */}
+
           <Pressable style={styles.searchButton} onPress={fetchCityCoordinates}>
             <FontAwesomeIcon icon={faSearch} size={20} color="#fff" />
           </Pressable>
         </View>
 
-        {/* Affichage des données météo actuelles */}
-        {weatherData && <CurrentWeather data={weatherData} />}
-
-        {/* Affichage des prévisions météo */}
-        {weatherData && <ForecastWeather data={weatherData} />}
+        {weatherData && (
+          <>
+            <CurrentWeather data={weatherData} />
+            <ForecastWeather data={weatherData} />
+          </>
+        )}
       </ImageBackground>
     </SafeAreaView>
   );
@@ -207,7 +200,7 @@ const styles = StyleSheet.create({
     padding: 10,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 10, // Espacement entre le bouton et le champ de recherche
+    marginRight: 10,
   },
   input: {
     flex: 1,

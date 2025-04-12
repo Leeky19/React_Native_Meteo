@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { ScrollView, View, StyleSheet, Text } from 'react-native';
 import Weather from './Weather';
 
-// Fonction pour formater la date
 const formatDate = (dateString) => {
   const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
   const date = new Date(dateString);
@@ -14,33 +13,35 @@ export default function ForecastWeather({ data }) {
 
   useEffect(() => {
     if (data && data.list) {
-      // Grouper les prévisions par jour
       const groupedByDay = data.list.reduce((acc, forecast) => {
-        const date = forecast.dt_txt.split(' ')[0]; // Récupère uniquement la date (AAAA-MM-JJ)
+        const date = forecast.dt_txt.split(' ')[0];
         if (!acc[date]) acc[date] = [];
-        acc[date].push(forecast); // Ajoute chaque prévision au jour correspondant
+        acc[date].push(forecast);
         return acc;
       }, {});
 
-      // Préparer la liste pour l'affichage
       const dailyForecasts = Object.keys(groupedByDay).map((date) => ({
         date,
-        forecasts: groupedByDay[date], // Toutes les prévisions de ce jour
+        forecasts: groupedByDay[date],
       }));
 
-      setForecastList(dailyForecasts.slice(0, 5)); // Affiche uniquement les 5 prochains jours
+      setForecastList(dailyForecasts.slice(0, 5));
     }
   }, [data]);
+
+  const isDarkBackground = data.list[0].weather[0].description.includes('pluie');
+  const textColor = isDarkBackground ? '#fff' : '#000';
 
   return (
     <ScrollView style={styles.container}>
       {forecastList.map((day, index) => (
         <View key={index} style={styles.dayContainer}>
-          {/* Formatage de la date */}
-          <Text style={styles.dateText}>{formatDate(day.date)}</Text>
+          <Text style={[styles.dateText, { color: textColor }]}>
+            {formatDate(day.date)}
+          </Text>
           <ScrollView horizontal>
             {day.forecasts.map((forecast, i) => (
-              <Weather key={i} forecast={forecast} />
+              <Weather key={i} forecast={forecast} isDarkBackground={isDarkBackground} />
             ))}
           </ScrollView>
         </View>
