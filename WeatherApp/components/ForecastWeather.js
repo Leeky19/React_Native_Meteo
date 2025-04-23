@@ -29,7 +29,14 @@ export default function ForecastWeather({ data }) {
     }
   }, [data]);
 
-  const isDarkBackground = data.list[0].weather[0].description.includes('pluie');
+  // Check if the background is dark based on weather conditions
+  const darkWeatherConditions = ['pluie', 'orage', 'brouillard', 'nuageux', 'neige', 'nuit'];
+  const weatherDescription = data.list[0].weather[0].description.toLowerCase();
+  const weatherMain = data.list[0].weather[0].main.toLowerCase();
+  const isDarkBackground = 
+    darkWeatherConditions.some(condition => weatherDescription.includes(condition)) ||
+    ['thunderstorm', 'rain', 'drizzle', 'mist', 'fog', 'haze', 'clouds'].includes(weatherMain);
+
   const textColor = isDarkBackground ? '#fff' : '#000';
 
   return (
@@ -63,5 +70,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 10,
     textAlign: 'center',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 5,
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 5,
+    overflow: 'hidden',
   },
 });

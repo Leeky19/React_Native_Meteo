@@ -20,14 +20,23 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     marginHorizontal: 10,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 10,
+    padding: 8,
   },
   hour: {
     fontSize: 14,
     fontWeight: '500',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 5,
   },
   temp: {
     fontSize: 16,
     fontWeight: 'bold',
+    textShadowColor: 'rgba(0, 0, 0, 0.75)',
+    textShadowOffset: { width: -1, height: 1 },
+    textShadowRadius: 5,
   },
   icon: {
     width: 50,
